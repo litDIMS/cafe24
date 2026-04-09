@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth Callback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .code-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title">인증 처리 중...</h1>
+        <p id="result">로딩 중...</p>
+        <div id="code-display"></div>
+    </div>
+    
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        
+        if (code) {
+            document.getElementById('title').innerHTML = '✓ 인증 성공!';
+            document.getElementById('result').innerHTML = '<strong>Authorization Code:</strong>';
+            document.getElementById('code-display').innerHTML = `<div class="code-box">${code}</div>`;
+            navigator.clipboard.writeText(code);
+        } else {
+            document.getElementById('title').innerHTML = '❌ Code를 받지 못했습니다';
+            document.getElementById('result').innerHTML = `<strong>현재 URL:</strong>`;
+            document.getElementById('code-display').innerHTML = `<div class="code-box">${window.location.href}</div>`;
+        }
+    </script>
+</body>
+</html>
