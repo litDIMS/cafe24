@@ -456,7 +456,7 @@ const CONFIG = {
   MALL_ID: 'gkstmdah1',
   REDIRECT_URI: 'https://litDIMS.github.io/cafe24/oauth-callback/',
   API_VERSION: '2024-09-01',
-  SCOPES: 'mall.read_application,mall.read_product,mall.write_product,mall.read_order,mall.write_order,mall.read_customer,mall.write_customer,mall.read_notification,mall.write_notification,mall.read_store,mall.write_store,mall.read_shipping,mall.write_shipping',
+  SCOPES: 'mall.read_application,mall.write_application,mall.read_product,mall.write_product,mall.read_order,mall.write_order,mall.read_customer,mall.write_customer,mall.read_notification,mall.write_notification,mall.read_store,mall.write_store,mall.read_shipping,mall.write_shipping',
   TOKEN_DURATION_MS: 2 * 60 * 60 * 1000,
   MAX_ISSUE: 15,
   REFRESH_BUFFER_MS: 5 * 60 * 1000,
@@ -574,9 +574,13 @@ async function doRefresh() {
 function startOAuth() {
   const csrf = Math.random().toString(36).substr(2, 16);
   sessionStorage.setItem('oauth_state', csrf);
-  const p = new URLSearchParams({ response_type:'code', client_id:CONFIG.CLIENT_ID, state:csrf, redirect_uri:CONFIG.REDIRECT_URI, scope:CONFIG.SCOPES });
+  const authUrl = `https://${CONFIG.MALL_ID}.cafe24api.com/api/v2/oauth/authorize`
+    + `?response_type=code`
+    + `&client_id=${CONFIG.CLIENT_ID}`
+    + `&state=${csrf}`
+    + `&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}`;
   toast('info', '카페24 인증', '인증 페이지로 이동합니다...');
-  window.location.href = `https://${CONFIG.MALL_ID}.cafe24api.com/api/v2/oauth/authorize?${p}`;
+  window.location.href = authUrl;
 }
 
 async function checkPendingCode() {
