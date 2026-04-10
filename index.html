@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>물류관리 시스템 | Cafe24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+  --border: #30363d; --border2: #3d444d;
+  --text: #e6edf3; --text2: #8b949e; --text3: #484f58;
+  --accent: #58a6ff; --accent2: #1f6feb;
+  --green: #3fb950; --green-bg: #0d2016;
+  --red: #f85149; --red-bg: #1f0a0a;
+  --yellow: #e3b341; --yellow-bg: #1f1700;
+  --purple: #bc8cff;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans KR','Malgun Gothic',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:14px; line-height:1.5; }
+.app { display:flex; flex-direction:column; min-height:100vh; }
+
+/* HEADER */
+header { background:var(--bg2); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; }
+.logo-icon { width:32px; height:32px; background:linear-gradient(135deg,var(--accent2),var(--purple)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.header-right { display:flex; align-items:center; gap:12px; }
+.token-status { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono); }
+.status-dot { width:6px; height:6px; border-radius:50%; background:var(--text3); }
+.status-dot.active { background:var(--green); box-shadow:0 0 6px var(--green); }
+.status-dot.warning { background:var(--yellow); box-shadow:0 0 6px var(--yellow); }
+.status-dot.error { background:var(--red); box-shadow:0 0 6px var(--red); }
+
+/* LAYOUT */
+.main-layout { display:grid; grid-template-columns:220px 1fr; flex:1; }
+
+/* SIDEBAR */
+.sidebar { background:var(--bg2); border-right:1px solid var(--border); padding:16px 0; position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto; }
+.nav-section { padding:0 12px 8px; }
+.nav-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; padding:0 8px; margin-bottom:4px; }
+.nav-item { display:flex; align-items:center; gap:8px; padding:7px 12px; border-radius:6px; cursor:pointer; color:var(--text2); font-size:13px; transition:all .15s; border:none; background:none; width:100%; text-align:left; }
+.nav-item:hover { background:var(--bg3); color:var(--text); }
+.nav-item.active { background:var(--accent2); color:#fff; }
+.nav-item .icon { font-size:15px; width:18px; text-align:center; }
+.nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; display:none; }
+.nav-badge.show { display:block; }
+.nav-divider { height:1px; background:var(--border); margin:8px 12px 12px; }
+
+/* CONTENT */
+.content { padding:24px; overflow-y:auto; }
+.page { display:none; }
+.page.active { display:block; }
+
+/* CARDS */
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:20px; }
+.card-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-weight:600; font-size:14px; }
+.card-body { padding:20px; }
+
+/* STATS */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
+.stat-label { font-size:12px; color:var(--text2); margin-bottom:6px; }
+.stat-value { font-size:26px; font-weight:700; font-family:var(--mono); }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+.stat-card.blue .stat-value { color:var(--accent); }
+.stat-card.green .stat-value { color:var(--green); }
+.stat-card.yellow .stat-value { color:var(--yellow); }
+.stat-card.red .stat-value { color:var(--red); }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; border:1px solid var(--border2); background:var(--bg3); color:var(--text); transition:all .15s; text-decoration:none; font-family:inherit; }
+.btn:hover { background:#292e36; }
+.btn.primary { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+.btn.primary:hover { background:#388bfd; }
+.btn.success { background:#1a4d1a; border-color:var(--green); color:var(--green); }
+.btn.danger { background:var(--red-bg); border-color:var(--red); color:var(--red); }
+.btn.sm { padding:4px 10px; font-size:12px; }
+.btn:disabled { opacity:.4; cursor:not-allowed; }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; padding:10px 14px; background:var(--bg3); color:var(--text2); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:11px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,.02); }
+
+/* BADGE */
+.badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+.badge.green { background:var(--green-bg); color:var(--green); border:1px solid #1a4d1a; }
+.badge.red { background:var(--red-bg); color:var(--red); border:1px solid #4d1a1a; }
+.badge.yellow { background:var(--yellow-bg); color:var(--yellow); border:1px solid #4d3a00; }
+.badge.blue { background:#0d1f33; color:var(--accent); border:1px solid #1a3a5c; }
+.badge.gray { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+.badge.purple { background:#1a0d33; color:var(--purple); border:1px solid #3d1a66; }
+
+/* FORM */
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:12px; font-weight:500; color:var(--text2); margin-bottom:6px; }
+.form-input { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px 12px; color:var(--text); font-size:13px; font-family:inherit; transition:border-color .15s; }
+.form-input:focus { outline:none; border-color:var(--accent); }
+.form-input::placeholder { color:var(--text3); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-row.three { grid-template-columns:1fr 1fr 1fr; }
+select.form-input { cursor:pointer; }
+
+/* TOAST */
+.toast-container { position:fixed; top:70px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.toast { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; max-width:340px; box-shadow:0 8px 24px rgba(0,0,0,.4); animation:slideIn .3s ease; position:relative; overflow:hidden; }
+.toast::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+.toast.success::before { background:var(--green); }
+.toast.error::before { background:var(--red); }
+.toast.info::before { background:var(--accent); }
+.toast.warning::before { background:var(--yellow); }
+.toast-title { font-weight:600; font-size:13px; margin-bottom:3px; }
+.toast-msg { font-size:12px; color:var(--text2); }
+@keyframes slideIn { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes slideOut { to { transform:translateX(110%); opacity:0; } }
+
+/* DETAIL PANEL */
+.detail-panel { background:var(--bg2); border:1px solid var(--border); border-radius:10px; display:none; margin-bottom:20px; }
+.detail-panel.open { display:block; }
+.detail-panel-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.detail-panel-body { padding:20px; }
+
+/* AUTH INFO */
+.auth-info { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:20px; }
+.auth-info-row { display:flex; justify-content:space-between; font-size:12px; color:var(--text2); padding:4px 0; border-bottom:1px solid var(--border); }
+.auth-info-row:last-child { border-bottom:none; }
+.auth-info-row strong { color:var(--text); font-family:var(--mono); font-size:11px; }
+
+/* PROGRESS */
+.progress-bar-wrap { background:var(--bg3); border-radius:4px; height:4px; overflow:hidden; }
+.progress-bar { height:100%; background:var(--accent); border-radius:4px; transition:width 1s linear; }
+
+/* POLLING STATUS */
+.polling-status { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
+.poll-dot { width:8px; height:8px; border-radius:50%; background:var(--text3); }
+.poll-dot.active { background:var(--green); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* PURCHASE ORDER */
+.purchase-order { background:#fff; color:#000; padding:30px 40px; border-radius:8px; border:1px solid var(--border); }
+.po-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid #333; }
+.po-title { font-size:26px; font-weight:800; color:#111; }
+.po-meta { text-align:right; font-size:12px; color:#555; line-height:1.8; }
+.po-section { margin-bottom:20px; }
+.po-section-title { font-size:13px; font-weight:700; color:#333; padding-bottom:6px; border-bottom:1px solid #ddd; margin-bottom:10px; }
+.po-table { width:100%; border-collapse:collapse; font-size:13px; }
+.po-table th { background:#f0f0f0; padding:8px 10px; text-align:center; border:1px solid #ccc; font-size:12px; }
+.po-table td { padding:8px 10px; border:1px solid #ddd; vertical-align:middle; }
+.po-table td.center { text-align:center; }
+.po-table td.right { text-align:right; }
+.po-total { background:#f9f9f9; font-weight:700; }
+.po-footer { margin-top:30px; padding-top:16px; border-top:1px solid #ddd; font-size:11px; color:#888; }
+.po-sign { display:flex; gap:20px; margin-top:16px; align-items:center; }
+.po-sign-box { border:1px solid #ccc; width:100px; height:50px; display:flex; align-items:flex-start; padding:4px 6px; font-size:10px; color:#aaa; }
+
+/* MISC */
+.mono { font-family:var(--mono); }
+.text-muted { color:var(--text2); }
+.text-sm { font-size:12px; }
+.flex { display:flex; align-items:center; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.gap-8 { gap:8px; }
+.mb-16 { margin-bottom:16px; }
+.mb-20 { margin-bottom:20px; }
+.section-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+.section-sub { color:var(--text2); font-size:13px; margin-bottom:20px; }
+.empty-state { text-align:center; padding:50px 20px; color:var(--text3); }
+.empty-state .icon { font-size:36px; margin-bottom:12px; }
+.loading-row td { text-align:center; padding:40px; color:var(--text3); }
+.no-print { }
+
+@media print {
+  header,.sidebar,.no-print { display:none!important; }
+  .main-layout { grid-template-columns:1fr; }
+  .content { padding:0; }
+  .page { display:none!important; }
+  #page-purchase-order { display:block!important; }
+  body { background:#fff; color:#000; }
+  .purchase-order { border:none; }
+}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="app">
+<header>
+  <div class="logo">
+    <div class="logo-icon">📦</div>
+    <span>물류관리 시스템</span>
+  </div>
+  <div class="header-right">
+    <div class="token-status" id="tokenStatus">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusLabel">미인증</span>
+    </div>
+    <div class="polling-status" id="pollStatus" style="display:none;">
+      <span class="poll-dot" id="pollDot"></span>
+      <span id="pollLabel">폴링 대기</span>
+    </div>
+    <button class="btn sm" id="btnNotif" onclick="requestNotificationPermission()">🔔 알림 허용</button>
+    <button class="btn sm danger" id="btnLogout" style="display:none;" onclick="logout()">로그아웃</button>
+  </div>
+</header>
+
+<div class="main-layout">
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">메뉴</div>
+    <button class="nav-item active" onclick="navigate('dashboard')"><span class="icon">📊</span> 대시보드</button>
+    <button class="nav-item" onclick="navigate('orders')"><span class="icon">📋</span> 주문 관리 <span class="nav-badge" id="newOrderBadge">0</span></button>
+    <button class="nav-item" onclick="navigate('purchase-order')"><span class="icon">🖨️</span> 발주서 출력</button>
+    <button class="nav-item" onclick="navigate('shipping')"><span class="icon">🚚</span> 송장 관리</button>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-section">
+    <div class="nav-label">시스템</div>
+    <button class="nav-item" onclick="navigate('auth')"><span class="icon">🔐</span> 인증 관리</button>
+    <button class="nav-item" onclick="navigate('settings')"><span class="icon">⚙️</span> 설정</button>
+  </div>
+</nav>
+
+<div class="content">
+
+<!-- 대시보드 -->
+<div class="page active" id="page-dashboard">
+  <div class="section-title">대시보드</div>
+  <div class="section-sub">물류 현황 요약</div>
+  <div class="stats-grid">
+    <div class="stat-card blue"><div class="stat-label">전체 주문</div><div class="stat-value" id="statNewOrders">–</div><div class="stat-sub">결제완료 기준</div></div>
+    <div class="stat-card green"><div class="stat-label">배송 준비중</div><div class="stat-value" id="statShipping">–</div><div class="stat-sub">미출고 포함</div></div>
+    <div class="stat-card yellow"><div class="stat-label">송장 미입력</div><div class="stat-value" id="statNoInvoice">–</div><div class="stat-sub">발주 대기</div></div>
+    <div class="stat-card red"><div class="stat-label">취소/반품</div><div class="stat-value" id="statCancel">–</div><div class="stat-sub">처리 필요</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">🔐 API 인증 상태</span><button class="btn sm primary" onclick="navigate('auth')">인증 관리</button></div>
+    <div class="card-body">
+      <div id="dashTokenInfo" style="color:var(--text2);font-size:13px;">인증 정보를 확인 중...</div>
+      <div class="progress-bar-wrap" id="tokenProgressWrap" style="display:none;margin-top:12px;"><div class="progress-bar" id="tokenProgress" style="width:100%"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">최근 주문</span><button class="btn sm" onclick="navigate('orders')">전체 보기</button></div>
+    <div class="table-wrap"><table><thead><tr><th>주문번호</th><th>회원ID</th><th>결제금액</th><th>결제수단</th><th>주문일시</th><th>상태</th></tr></thead><tbody id="dashOrdersTable"><tr class="loading-row"><td colspan="6">인증 후 주문을 조회하세요</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- 주문 관리 -->
+<div class="page" id="page-orders">
+  <div class="flex-between mb-20">
+    <div><div class="section-title">주문 관리</div><div class="section-sub">카페24 주문 목록</div></div>
+    <div class="flex gap-8">
+      <button class="btn" onclick="fetchOrders()">🔄 새로고침</button>
+      <button class="btn primary" onclick="navigate('purchase-order')">🖨️ 발주서 출력</button>
+    </div>
+  </div>
+  <div class="card mb-16">
+    <div class="card-body" style="padding:14px 20px;">
+      <div class="form-row three" style="align-items:flex-end;">
+        <div class="form-group" style="margin:0;"><label class="form-label">시작일</label><input type="date" class="form-input" id="filterStartDate"></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">종료일</label><input type="date" class="form-input" id="filterEndDate"></div>
+        <div style="display:flex;gap:8px;"><button class="btn primary" onclick="fetchOrders()">조회</button><button class="btn" onclick="setDefaultDates()">오늘</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-panel-header"><span class="card-title" id="detailOrderId">주문 상세</span><button class="btn sm" onclick="closeDetail()">✕ 닫기</button></div>
+    <div class="detail-panel-body" id="detailPanelBody"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">주문 목록</span><span class="text-muted text-sm" id="orderCount">0건</span></div>
+    <div class="table-wrap"><table><thead><tr>
+      <th><input type="checkbox" id="checkAll" onchange="toggleAllCheck(this)"></th>
+      <th>주문번호</th><th>회원ID</th><th>이메일</th><th>결제금액</th><th>결제수단</th><th>주문일시</th><th>결제</th><th>배송</th><th>액션</th>
+    </tr></thead><tbody id="ordersTable"><tr class="loading-row"><td colspan="10">인증 후 주문을 조회하세요</td></tr></tbody></table></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;">
+      <button class="btn sm" onclick="printSelected()">🖨️ 선택 발주서 출력</button>
+      <button class="btn sm" onclick="exportOrders()">📥 CSV 내보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 발주서 출력 -->
+<div class="page" id="page-purchase-order">
+  <div class="flex-between mb-20 no-print">
+    <div><div class="section-title">발주서 출력</div><div class="section-sub">주문 기반 발주서 생성 및 인쇄</div></div>
+    <div class="flex gap-8">
+      <button class="btn" onclick="generatePO()">🔄 발주서 생성</button>
+      <button class="btn primary" onclick="window.print()">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div class="card no-print mb-16">
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group" style="margin:0;"><label class="form-label">발주일</label><input type="date" class="form-input" id="poDate"></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">발주서 번호</label><input type="text" class="form-input" id="poNumber" value="PO-2024-001" oninput="document.getElementById('poNumDisplay').textContent=this.value"></div>
+      </div>
+    </div>
+  </div>
+  <div class="purchase-order" id="purchaseOrderDoc">
+    <div class="po-header">
+      <div><div class="po-title">발 주 서</div><div style="font-size:11px;color:#888;margin-top:2px;">PURCHASE ORDER</div></div>
+      <div class="po-meta">
+        <div><strong>발주서 번호:</strong> <span id="poNumDisplay">PO-2024-001</span></div>
+        <div><strong>발주일:</strong> <span id="poDateDisplay">–</span></div>
+        <div><strong>쇼핑몰:</strong> gkstmdah1</div>
+        <div><strong>담당자:</strong> ________________</div>
+      </div>
+    </div>
+    <div class="po-section">
+      <div class="po-section-title">■ 주문 상품 목록</div>
+      <table class="po-table"><thead><tr><th style="width:40px">No.</th><th>주문번호</th><th>상품명</th><th>옵션</th><th style="width:60px">수량</th><th style="width:100px">단가</th><th style="width:100px">금액</th><th>비고</th></tr></thead>
+      <tbody id="poTableBody"><tr><td colspan="8" style="text-align:center;color:#999;padding:30px">주문 데이터를 먼저 조회하세요</td></tr></tbody>
+      <tfoot><tr class="po-total"><td colspan="4" class="center">합 계</td><td class="center" id="poTotalQty">0</td><td colspan="2" class="right" id="poTotalAmount">₩0</td><td></td></tr></tfoot></table>
+    </div>
+    <div class="po-section">
+      <div class="po-section-title">■ 배송지 정보</div>
+      <table class="po-table"><thead><tr><th>주문번호</th><th>수취인</th><th>연락처</th><th>배송지</th><th>메모</th></tr></thead>
+      <tbody id="poShippingBody"><tr><td colspan="5" style="text-align:center;color:#999;padding:16px">–</td></tr></tbody></table>
+    </div>
+    <div class="po-footer">
+      <div>※ 본 발주서는 시스템 자동 생성 문서입니다.</div>
+      <div class="po-sign">
+        <span style="font-size:12px;color:#333;">결재:</span>
+        <div class="po-sign-box">담당자</div>
+        <div class="po-sign-box">팀 장</div>
+        <div class="po-sign-box">대 표</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 송장 관리 -->
+<div class="page" id="page-shipping">
+  <div class="flex-between mb-20">
+    <div><div class="section-title">송장 관리</div><div class="section-sub">로젠택배 송장 입력 및 전송</div></div>
+  </div>
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">🚚 로젠택배 API 설정</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group" style="margin:0;"><label class="form-label">API URL</label><input type="text" class="form-input" id="lozenApiUrl" placeholder="https://api.ilogen.com/..."></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">인증키</label><input type="password" class="form-input" id="lozenApiKey" placeholder="로젠택배 API Key"></div>
+      </div>
+      <div class="form-row" style="margin-top:12px;">
+        <div class="form-group" style="margin:0;"><label class="form-label">업체코드 (CUST_ID)</label><input type="text" class="form-input" id="lozenCustId" placeholder="업체코드"></div>
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn primary" onclick="saveLozenConfig()">💾 저장</button>
+          <button class="btn" onclick="testLozenApi()">🔌 연결 테스트</button>
+        </div>
+      </div>
+      <div id="lozenTestResult" style="margin-top:10px;font-size:12px;display:none;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">송장 입력</span><span class="text-muted text-sm" id="noInvoiceCount">0건</span></div>
+    <div class="table-wrap"><table><thead><tr>
+      <th><input type="checkbox" id="checkAllShip" onchange="toggleAllShipCheck(this)"></th>
+      <th>주문번호</th><th>주문일</th><th>수취인</th><th>연락처</th><th>배송지</th><th>송장번호</th><th>상태</th><th>전송</th>
+    </tr></thead><tbody id="shippingTable"><tr class="loading-row"><td colspan="9">주문 데이터를 먼저 조회하세요</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- 인증 관리 -->
+<div class="page" id="page-auth">
+  <div class="section-title">인증 관리</div>
+  <div class="section-sub">카페24 API OAuth 2.0 인증</div>
+
+  <div class="card mb-20" id="authStatusCard">
+    <div class="card-header"><span class="card-title">현재 인증 상태</span></div>
+    <div class="card-body" id="authStatusBody"><div class="empty-state"><div class="icon">🔓</div><p>아직 인증되지 않았습니다.</p></div></div>
+  </div>
+
+  <div class="card mb-20">
+    <div class="card-header"><span class="card-title">📱 앱 정보</span></div>
+    <div class="card-body">
+      <div class="auth-info">
+        <div class="auth-info-row"><span>Mall ID</span><strong>gkstmdah1</strong></div>
+        <div class="auth-info-row"><span>Client ID</span><strong>eCXgAY0UfUz4CEAjm6LNzL</strong></div>
+        <div class="auth-info-row"><span>App URL</span><strong>https://litDIMS.github.io/cafe24/</strong></div>
+        <div class="auth-info-row"><span>Redirect URI</span><strong>https://litDIMS.github.io/cafe24/oauth-callback/</strong></div>
+        <div class="auth-info-row"><span>요청 Scope</span><strong>mall.read_order, mall.read_product, mall.write_shipping</strong></div>
+      </div>
+      <div class="flex gap-8" style="flex-wrap:wrap;">
+        <button class="btn primary" onclick="startOAuth()">🔐 카페24 인증 시작</button>
+        <button class="btn" onclick="checkPendingCode()">🔄 토큰 발급 시도</button>
+        <button class="btn danger" onclick="clearToken()">🗑️ 토큰 삭제</button>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:var(--yellow-bg);border:1px solid #4d3a00;border-radius:6px;font-size:12px;color:var(--yellow);">
+        ⚠️ <strong>CORS 안내:</strong> 카페24 토큰 엔드포인트는 브라우저 직접 호출 시 CORS 오류가 발생할 수 있습니다.
+        실제 운영 시 Cloudflare Worker 또는 서버 프록시를 통해 토큰 교환을 처리하는 것을 권장합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">🕐 발급 이력</span></div>
+    <div class="card-body" id="tokenHistory"><div class="text-muted text-sm">이력 없음</div></div>
+  </div>
+</div>
+
+<!-- 설정 -->
+<div class="page" id="page-settings">
+  <div class="section-title">설정</div>
+  <div class="section-sub">시스템 동작 설정</div>
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">🔄 자동 주문 폴링</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group" style="margin:0;"><label class="form-label">폴링 간격 (분)</label><input type="number" class="form-input" id="pollInterval" value="5" min="1" max="60"></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">신규 주문 판단 기준</label><select class="form-input" id="pollNewOrderBase"><option value="payment">결제 완료 시각</option><option value="order">주문 시각</option></select></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+        <button class="btn success" id="btnStartPoll" onclick="startPolling()">▶ 폴링 시작</button>
+        <button class="btn danger" id="btnStopPoll" onclick="stopPolling()" style="display:none;">■ 폴링 중지</button>
+        <span class="text-muted text-sm" id="pollNextLabel"></span>
+      </div>
+    </div>
+  </div>
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">🔔 푸시 알림 설정</span></div>
+    <div class="card-body">
+      <div class="flex gap-8" style="margin-bottom:10px;">
+        <button class="btn" onclick="requestNotificationPermission()">알림 권한 요청</button>
+        <span class="text-sm text-muted" id="notifPermLabel">확인 중...</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);">신규 주문 감지 시 브라우저 알림과 인앱 토스트로 알려드립니다.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">💾 데이터 관리</span></div>
+    <div class="card-body">
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="exportOrders()">📥 주문 CSV 내보내기</button>
+        <button class="btn danger" onclick="clearAllData()">🗑️ 전체 초기화</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main-layout -->
+</div><!-- /app -->
+
+<script>
+/* ══════════════════ CONFIG ══════════════════ */
+const CONFIG = {
+  CLIENT_ID: 'eCXgAY0UfUz4CEAjm6LNzL',
+  CLIENT_SECRET: '6Su4aofoZSNSFXD9jmZ1MF',
+  MALL_ID: 'gkstmdah1',
+  REDIRECT_URI: 'https://litDIMS.github.io/cafe24/oauth-callback/',
+  API_VERSION: '2024-09-01',
+  SCOPES: 'mall.read_application,mall.read_product,mall.write_product,mall.read_order,mall.write_order,mall.read_customer,mall.write_customer,mall.read_notification,mall.write_notification,mall.read_store,mall.write_store,mall.read_shipping,mall.write_shipping',
+  TOKEN_DURATION_MS: 2 * 60 * 60 * 1000,
+  MAX_ISSUE: 15,
+  REFRESH_BUFFER_MS: 5 * 60 * 1000,
+};
+
+/* ══════════════════ STATE ══════════════════ */
+const S = {
+  orders: [],
+  token: null,
+  pollTimer: null,
+  refreshTimer: null,
+  knownIds: new Set(),
+  selectedIds: new Set(),
+};
+
+/* ══════════════════ INIT ══════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  loadToken();
+  setDefaultDates();
+  updateAuthUI();
+  checkNotifPermission();
+  checkPendingCode();
+  updateDashTokenInfo();
+  updateHeaderStatus();
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('poDate').value = today;
+  document.getElementById('poDateDisplay').textContent = fmtDate(new Date());
+  document.getElementById('poDate').addEventListener('change', e => {
+    document.getElementById('poDateDisplay').textContent = fmtDate(new Date(e.target.value + 'T00:00:00'));
+  });
+
+  const savedInterval = localStorage.getItem('poll_interval');
+  if (savedInterval) document.getElementById('pollInterval').value = savedInterval;
+
+  const lc = JSON.parse(localStorage.getItem('lozen_config') || '{}');
+  if (lc.url) document.getElementById('lozenApiUrl').value = lc.url;
+  if (lc.key) document.getElementById('lozenApiKey').value = lc.key;
+  if (lc.custId) document.getElementById('lozenCustId').value = lc.custId;
+
+  if (S.token && isValid()) {
+    fetchOrders();
+    scheduleRefresh();
+  }
+
+  setInterval(updateHeaderStatus, 30000);
+  setInterval(updateDashTokenInfo, 15000);
+});
+
+/* ══════════════════ NAVIGATE ══════════════════ */
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') === `navigate('${page}')`) n.classList.add('active');
+  });
+  if (page === 'auth') { updateAuthUI(); updateTokenHistory(); }
+  if (page === 'dashboard') updateDashboard();
+  if (page === 'purchase-order') generatePO();
+  if (page === 'shipping') renderShippingTable();
+  if (page === 'settings') checkNotifPermission();
+}
+
+/* ══════════════════ TOKEN ══════════════════ */
+function loadToken() {
+  try { const r = localStorage.getItem('cafe24_token'); if (r) S.token = JSON.parse(r); } catch(e) {}
+}
+function saveToken(t) {
+  S.token = t;
+  localStorage.setItem('cafe24_token', JSON.stringify(t));
+  updateAuthUI();
+  updateHeaderStatus();
+  updateDashTokenInfo();
+}
+function isValid() {
+  return S.token && Date.now() < S.token.expires_at - 60000;
+}
+function scheduleRefresh() {
+  clearTimeout(S.refreshTimer);
+  if (!S.token) return;
+  const wait = S.token.expires_at - Date.now() - CONFIG.REFRESH_BUFFER_MS;
+  if (wait > 0) {
+    S.refreshTimer = setTimeout(doRefresh, wait);
+  } else {
+    toast('warning', '토큰 만료 임박', '재인증이 필요합니다.');
+  }
+}
+async function doRefresh() {
+  if (!S.token?.refresh_token) { toast('warning', '갱신 불가', '재로그인 필요'); navigate('auth'); return; }
+  if (S.token.issue_count >= CONFIG.MAX_ISSUE) { toast('error', '한도 초과', '2시간 내 15회 한도 초과'); return; }
+  try {
+    const cred = btoa(`${CONFIG.CLIENT_ID}:${CONFIG.CLIENT_SECRET}`);
+    const res = await fetch(`https://${CONFIG.MALL_ID}.cafe24api.com/api/v2/oauth/token`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${cred}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: S.token.refresh_token }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      saveToken({ access_token: d.access_token, refresh_token: d.refresh_token || S.token.refresh_token,
+        expires_at: Date.now() + d.expires_in * 1000, issued_at: Date.now(),
+        issue_count: S.token.issue_count + 1, mall_id: CONFIG.MALL_ID });
+      scheduleRefresh();
+      addHistory('자동 갱신 (refresh_token)');
+      toast('success', '토큰 자동 갱신', '액세스 토큰이 갱신되었습니다.');
+    } else {
+      toast('warning', '갱신 실패', '재로그인이 필요합니다.'); navigate('auth');
+    }
+  } catch(e) { toast('error', '갱신 오류', e.message); }
+}
+
+/* ══════════════════ OAUTH ══════════════════ */
+function startOAuth() {
+  const csrf = Math.random().toString(36).substr(2, 16);
+  sessionStorage.setItem('oauth_state', csrf);
+  const p = new URLSearchParams({ response_type:'code', client_id:CONFIG.CLIENT_ID, state:csrf, redirect_uri:CONFIG.REDIRECT_URI, scope:CONFIG.SCOPES });
+  toast('info', '카페24 인증', '인증 페이지로 이동합니다...');
+  window.location.href = `https://${CONFIG.MALL_ID}.cafe24api.com/api/v2/oauth/authorize?${p}`;
+}
+
+async function checkPendingCode() {
+  const raw = localStorage.getItem('pending_auth_code');
+  if (!raw) return;
+  let pending;
+  try { pending = JSON.parse(raw); } catch(e) { return; }
+  if (Date.now() - pending.timestamp > 60000) {
+    localStorage.removeItem('pending_auth_code');
+    toast('warning', '코드 만료', '인증 코드(1분)가 만료되었습니다. 다시 인증하세요.');
+    return;
+  }
+  toast('info', '토큰 발급 중', '잠시만 기다려주세요...');
+  try {
+    const cred = btoa(`${CONFIG.CLIENT_ID}:${CONFIG.CLIENT_SECRET}`);
+    const res = await fetch(`https://${CONFIG.MALL_ID}.cafe24api.com/api/v2/oauth/token`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${cred}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type:'authorization_code', code:pending.code, redirect_uri:CONFIG.REDIRECT_URI }),
+    });
+    localStorage.removeItem('pending_auth_code');
+    if (res.ok) {
+      const d = await res.json();
+      saveToken({ access_token:d.access_token, refresh_token:d.refresh_token,
+        expires_at: Date.now() + d.expires_in*1000, issued_at: Date.now(),
+        issue_count: (S.token?.issue_count || 0) + 1, mall_id: CONFIG.MALL_ID });
+      scheduleRefresh();
+      addHistory('신규 발급 (authorization_code)');
+      toast('success', '✅ 인증 성공', '액세스 토큰 발급 완료!');
+      showLogout(true);
+      fetchOrders();
+    } else {
+      const e = await res.json().catch(() => ({}));
+      toast('error', '발급 실패', e.error_description || '다시 인증하세요.');
+    }
+  } catch(e) {
+    localStorage.removeItem('pending_auth_code');
+    toast('warning', 'CORS 제한', '서버 프록시 없이는 직접 토큰 교환이 불가합니다.');
+  }
+}
+
+function clearToken() {
+  if (!confirm('토큰을 삭제하시겠습니까?')) return;
+  S.token = null;
+  localStorage.removeItem('cafe24_token');
+  localStorage.removeItem('pending_auth_code');
+  clearTimeout(S.refreshTimer);
+  stopPolling();
+  updateAuthUI();
+  updateHeaderStatus();
+  showLogout(false);
+  toast('info', '토큰 삭제', '인증 정보가 삭제되었습니다.');
+}
+function logout() { clearToken(); navigate('auth'); }
+function showLogout(show) { document.getElementById('btnLogout').style.display = show ? '' : 'none'; }
+
+/* ══════════════════ AUTH UI ══════════════════ */
+function updateAuthUI() {
+  const body = document.getElementById('authStatusBody');
+  const t = S.token;
+  if (!t) { body.innerHTML = '<div class="empty-state"><div class="icon">🔓</div><p>인증되지 않았습니다.<br>아래에서 카페24 인증을 시작하세요.</p></div>'; return; }
+  const ms = t.expires_at - Date.now();
+  const min = Math.max(0, Math.round(ms / 60000));
+  const ok = ms > 0;
+  const pct = Math.max(0, Math.min(100, ms / CONFIG.TOKEN_DURATION_MS * 100));
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div><div class="text-muted text-sm" style="margin-bottom:4px">상태</div>
+        <span class="badge ${ok?'green':'red'}">${ok?'✅ 유효':'❌ 만료'}</span></div>
+      <div><div class="text-muted text-sm" style="margin-bottom:4px">잔여시간</div>
+        <span class="mono" style="font-weight:600;color:${min<10?'var(--red)':'var(--green)'}">${ok?min+'분':'만료됨'}</span></div>
+      <div><div class="text-muted text-sm" style="margin-bottom:4px">발급 횟수 (2h 기준)</div>
+        <span class="mono" style="color:${t.issue_count>=12?'var(--yellow)':'var(--text)'}">${t.issue_count} / ${CONFIG.MAX_ISSUE}</span></div>
+      <div><div class="text-muted text-sm" style="margin-bottom:4px">발급 시각</div>
+        <span class="text-sm mono">${new Date(t.issued_at).toLocaleString('ko-KR')}</span></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="text-muted text-sm" style="margin-bottom:4px">액세스 토큰 (앞 24자)</div>
+      <code style="font-family:var(--mono);font-size:11px;color:var(--text2);background:var(--bg3);padding:4px 8px;border-radius:4px;display:block;word-break:break-all">${t.access_token?t.access_token.substring(0,24)+'...':'N/A'}</code>
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="text-muted text-sm" style="margin-bottom:4px">만료 시각</div>
+      <span class="text-sm mono">${new Date(t.expires_at).toLocaleString('ko-KR')}</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:${pct<20?'var(--red)':pct<50?'var(--yellow)':'var(--green)'}"></div></div>`;
+  showLogout(ok);
+}
+
+function updateHeaderStatus() {
+  const dot = document.getElementById('statusDot');
+  const lbl = document.getElementById('statusLabel');
+  if (!S.token) { dot.className='status-dot'; lbl.textContent='미인증'; return; }
+  const ms = S.token.expires_at - Date.now();
+  if (ms <= 0) { dot.className='status-dot error'; lbl.textContent='토큰 만료'; }
+  else if (ms < 10*60*1000) { dot.className='status-dot warning'; lbl.textContent=`갱신 필요 (${Math.round(ms/60000)}분)`; }
+  else { dot.className='status-dot active'; lbl.textContent=`인증 (${Math.round(ms/60000)}분 남음)`; }
+}
+
+function updateDashTokenInfo() {
+  const el = document.getElementById('dashTokenInfo');
+  const wrap = document.getElementById('tokenProgressWrap');
+  if (!S.token) { el.innerHTML='❌ 인증 안 됨 – <a href="#" onclick="navigate(\'auth\')" style="color:var(--accent)">인증 관리</a>로 이동'; wrap.style.display='none'; return; }
+  const ms = S.token.expires_at - Date.now();
+  const min = Math.max(0, Math.round(ms / 60000));
+  const pct = Math.max(0, Math.min(100, ms / CONFIG.TOKEN_DURATION_MS * 100));
+  el.innerHTML = `✅ 인증 유효 &nbsp;|&nbsp; 잔여: <strong style="color:${min<10?'var(--red)':'var(--green)'}">${min}분</strong> &nbsp;|&nbsp; 발급 횟수: <strong>${S.token.issue_count}/${CONFIG.MAX_ISSUE}</strong> &nbsp;|&nbsp; 만료: <span class="mono text-sm">${new Date(S.token.expires_at).toLocaleTimeString('ko-KR')}</span>`;
+  wrap.style.display='block';
+  const bar = document.getElementById('tokenProgress');
+  bar.style.width = pct+'%';
+  bar.style.background = pct<20?'var(--red)':pct<50?'var(--yellow)':'var(--green)';
+}
+
+function addHistory(reason) {
+  const h = JSON.parse(localStorage.getItem('token_history') || '[]');
+  h.unshift({ time: Date.now(), reason });
+  if (h.length > 20) h.pop();
+  localStorage.setItem('token_history', JSON.stringify(h));
+}
+function updateTokenHistory() {
+  const el = document.getElementById('tokenHistory');
+  const h = JSON.parse(localStorage.getItem('token_history') || '[]');
+  if (!h.length) { el.innerHTML='<div class="text-muted text-sm">이력 없음</div>'; return; }
+  el.innerHTML = h.map(i => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--green)">${i.reason}</span><span class="text-muted mono">${new Date(i.time).toLocaleString('ko-KR')}</span></div>`).join('');
+}
+
+/* ══════════════════ FETCH ORDERS ══════════════════ */
+async function fetchOrders() {
+  if (!isValid()) { toast('warning', '인증 필요', '카페24 인증 후 이용하세요.'); navigate('auth'); return; }
+  const sd = document.getElementById('filterStartDate').value;
+  const ed = document.getElementById('filterEndDate').value;
+  document.getElementById('ordersTable').innerHTML = '<tr class="loading-row"><td colspan="10">🔄 주문 조회 중...</td></tr>';
+  try {
+    const res = await fetch(`https://${CONFIG.MALL_ID}.cafe24api.com/api/v2/admin/orders?start_date=${sd}&end_date=${ed}&limit=50&embed=items,shippingaddress`, {
+      headers: { 'Authorization': `Bearer ${S.token.access_token}`, 'Content-Type': 'application/json', 'X-Cafe24-Api-Version': CONFIG.API_VERSION }
+    });
+    if (res.status === 401) { toast('error', '인증 만료', '토큰이 만료됐습니다.'); navigate('auth'); return; }
+    const data = await res.json();
+    S.orders = data.orders || [];
+    detectNew(S.orders);
+    renderOrders(S.orders);
+    renderShippingTable();
+    updateDashboard();
+    toast('success', '주문 조회', `${S.orders.length}건 로드`);
+  } catch(e) {
+    loadSample();
+  }
+}
+
+function loadSample() {
+  S.orders = [
+    { order_id:'20170710-0000013', member_id:'sampleid', member_email:'sample@sample.com', payment_amount:'30000.00',
+      payment_method_name:['카드','현금'], order_date:'2018-07-04T11:21:35+09:00', paid:'T', canceled:'F',
+      shipping_status:'T', first_order:'T',
+      items:[{product_name:'iPhone X',quantity:1,price:'20000.00'},{product_name:'iPhone X 케이스',quantity:2,price:'5000.00'}],
+      shippingaddress:{name:'홍길동',phone:'010-1234-5678',address1:'서울 강남구 테헤란로 123',address2:'456호',zipcode:'06234'} },
+    { order_id:'20170711-0000014', member_id:'sampleid', member_email:'sample@sample.com', payment_amount:'10000.00',
+      payment_method_name:['카드'], order_date:'2018-07-04T11:21:35+09:00', paid:'T', canceled:'F',
+      shipping_status:'M', first_order:'F',
+      items:[{product_name:'Galaxy S24',quantity:1,price:'10000.00'}],
+      shippingaddress:{name:'김철수',phone:'010-9876-5432',address1:'부산 해운대구 해운대로 456',address2:'',zipcode:'48094'} },
+  ];
+  detectNew(S.orders);
+  renderOrders(S.orders);
+  renderShippingTable();
+  updateDashboard();
+  toast('info', '샘플 데이터', 'CORS 제한 – 샘플 데이터로 표시합니다');
+}
+
+/* ══════════════════ NEW ORDER DETECTION ══════════════════ */
+function detectNew(orders) {
+  const newOnes = orders.filter(o => !S.knownIds.has(o.order_id));
+  if (newOnes.length > 0 && S.knownIds.size > 0) {
+    newOnes.forEach(o => pushNotif(o));
+    const badge = document.getElementById('newOrderBadge');
+    badge.textContent = (parseInt(badge.textContent)||0) + newOnes.length;
+    badge.classList.add('show');
+  }
+  orders.forEach(o => S.knownIds.add(o.order_id));
+}
+
+function pushNotif(order) {
+  // 인앱 토스트
+  toast('success', '🆕 신규 주문', `${order.order_id} | ₩${Number(order.payment_amount).toLocaleString()}`);
+  // 브라우저 푸시
+  if (Notification.permission !== 'granted') return;
+  const n = new Notification('📦 신규 주문 입력됨', {
+    body: `주문: ${order.order_id}\n금액: ₩${Number(order.payment_amount).toLocaleString()}\n회원: ${order.member_id}`,
+    tag: order.order_id,
+  });
+  n.onclick = () => { window.focus(); navigate('orders'); n.close(); };
+}
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) { toast('error', '미지원', '이 브라우저는 알림을 지원하지 않습니다.'); return; }
+  Notification.requestPermission().then(p => {
+    checkNotifPermission();
+    if (p === 'granted') { toast('success', '알림 허용', '신규 주문 알림을 받을 수 있습니다!'); document.getElementById('btnNotif').textContent = '🔔 알림 ON'; }
+    else toast('warning', '알림 거부', '브라우저 설정에서 알림을 허용해주세요.');
+  });
+}
+function checkNotifPermission() {
+  const el = document.getElementById('notifPermLabel');
+  if (!el) return;
+  const map = { granted:'✅ 허용됨', denied:'❌ 거부됨', default:'⚪ 미설정' };
+  el.textContent = map[Notification?.permission] || '알 수 없음';
+  if (Notification?.permission === 'granted') document.getElementById('btnNotif').textContent = '🔔 알림 ON';
+}
+
+/* ══════════════════ POLLING ══════════════════ */
+function startPolling() {
+  if (S.pollTimer) clearInterval(S.pollTimer);
+  if (!isValid()) { toast('warning', '인증 필요', '인증 후 폴링을 시작하세요.'); return; }
+  const min = parseInt(document.getElementById('pollInterval').value) || 5;
+  localStorage.setItem('poll_interval', min);
+  fetchOrders();
+  S.pollTimer = setInterval(fetchOrders, min * 60 * 1000);
+  document.getElementById('btnStartPoll').style.display = 'none';
+  document.getElementById('btnStopPoll').style.display = '';
+  document.getElementById('pollStatus').style.display = 'flex';
+  document.getElementById('pollDot').classList.add('active');
+  document.getElementById('pollLabel').textContent = `${min}분마다 조회 중`;
+  updatePollNext(min);
+  toast('success', '폴링 시작', `${min}분마다 신규 주문을 확인합니다.`);
+}
+function stopPolling() {
+  clearInterval(S.pollTimer); S.pollTimer = null;
+  document.getElementById('btnStartPoll').style.display = '';
+  document.getElementById('btnStopPoll').style.display = 'none';
+  document.getElementById('pollDot').classList.remove('active');
+  document.getElementById('pollLabel').textContent = '폴링 중지됨';
+  document.getElementById('pollNextLabel').textContent = '';
+}
+function updatePollNext(min) {
+  const next = new Date(Date.now() + min * 60 * 1000);
+  document.getElementById('pollNextLabel').textContent = `다음 조회: ${next.toLocaleTimeString('ko-KR')}`;
+}
+
+/* ══════════════════ RENDER ORDERS ══════════════════ */
+function renderOrders(orders) {
+  const tbody = document.getElementById('ordersTable');
+  document.getElementById('orderCount').textContent = `${orders.length}건`;
+  if (!orders.length) { tbody.innerHTML='<tr class="loading-row"><td colspan="10">📭 주문 없음</td></tr>'; return; }
+  tbody.innerHTML = orders.map(o => {
+    const paid = o.paid==='T' ? '<span class="badge green">결제완료</span>' : '<span class="badge gray">미결제</span>';
+    const first = o.first_order==='T' ? ' <span class="badge purple">첫주문</span>' : '';
+    const ship = o.canceled==='T' ? '<span class="badge red">취소</span>'
+      : o.shipping_status==='M' ? '<span class="badge blue">운송장발행</span>'
+      : o.shipping_status==='T' ? '<span class="badge yellow">배송준비</span>'
+      : '<span class="badge gray">–</span>';
+    return `<tr>
+      <td><input type="checkbox" class="order-check" value="${o.order_id}" onchange="toggleSel('${o.order_id}',this.checked)"></td>
+      <td class="mono" style="font-size:12px">${o.order_id}</td>
+      <td>${o.member_id||'–'}</td>
+      <td style="font-size:12px;color:var(--text2)">${o.member_email||'–'}</td>
+      <td class="mono">₩${Number(o.payment_amount||0).toLocaleString()}</td>
+      <td style="font-size:12px">${(o.payment_method_name||[]).join(', ')}</td>
+      <td style="font-size:12px;color:var(--text2)">${fmtDate(new Date(o.order_date))}</td>
+      <td>${paid}${first}</td>
+      <td>${ship}</td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn sm" onclick="showDetail('${o.order_id}')">상세</button>
+        <button class="btn sm success" onclick="printOne('${o.order_id}')">발주</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══════════════════ ORDER DETAIL ══════════════════ */
+function showDetail(id) {
+  const o = S.orders.find(x => x.order_id===id);
+  if (!o) return;
+  document.getElementById('detailOrderId').textContent = `주문 상세 – ${id}`;
+  const items = o.items || [];
+  const addr = o.shippingaddress || {};
+  document.getElementById('detailPanelBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div class="text-muted text-sm" style="font-weight:600;margin-bottom:10px">주문 상품</div>
+        ${items.length ? items.map(i=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${i.product_name||'상품명 없음'}</span><span class="mono" style="color:var(--text2)">×${i.quantity} | ₩${Number(i.price||0).toLocaleString()}</span></div>`).join('') : '<div class="text-muted text-sm">상품 정보 없음</div>'}
+      </div>
+      <div>
+        <div class="text-muted text-sm" style="font-weight:600;margin-bottom:10px">배송 정보</div>
+        <div style="background:var(--bg3);border-radius:6px;padding:12px;font-size:13px;line-height:2.1">
+          <div><strong>수취인:</strong> ${addr.name||'–'}</div>
+          <div><strong>연락처:</strong> ${addr.phone||'–'}</div>
+          <div><strong>우편번호:</strong> ${addr.zipcode||'–'}</div>
+          <div><strong>주소:</strong> ${addr.address1||'–'} ${addr.address2||''}</div>
+        </div>
+        <button class="btn sm primary" style="margin-top:10px" onclick="navigate('shipping')">🚚 송장 입력</button>
+      </div>
+    </div>`;
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('detailPanel').scrollIntoView({ behavior:'smooth' });
+}
+function closeDetail() { document.getElementById('detailPanel').classList.remove('open'); }
+
+/* ══════════════════ DASHBOARD ══════════════════ */
+function updateDashboard() {
+  const orders = S.orders;
+  document.getElementById('statNewOrders').textContent = orders.filter(o=>o.paid==='T').length;
+  document.getElementById('statShipping').textContent = orders.filter(o=>o.paid==='T'&&o.canceled!=='T'&&o.shipping_status==='T').length;
+  document.getElementById('statNoInvoice').textContent = orders.filter(o=>o.paid==='T'&&o.canceled!=='T'&&o.shipping_status!=='M').length;
+  document.getElementById('statCancel').textContent = orders.filter(o=>o.canceled==='T').length;
+  const tbody = document.getElementById('dashOrdersTable');
+  const recent = orders.slice(0,5);
+  if (!recent.length) { tbody.innerHTML='<tr class="loading-row"><td colspan="6">📭 주문 없음</td></tr>'; return; }
+  tbody.innerHTML = recent.map(o => `<tr>
+    <td class="mono" style="font-size:12px">${o.order_id}</td>
+    <td>${o.member_id||'–'}</td>
+    <td class="mono">₩${Number(o.payment_amount||0).toLocaleString()}</td>
+    <td style="font-size:12px">${(o.payment_method_name||[]).join(', ')}</td>
+    <td style="font-size:12px;color:var(--text2)">${fmtDate(new Date(o.order_date))}</td>
+    <td>${o.paid==='T'?'<span class="badge green">결제완료</span>':'<span class="badge gray">미결제</span>'}</td>
+  </tr>`).join('');
+}
+
+/* ══════════════════ PURCHASE ORDER ══════════════════ */
+function generatePO() {
+  const orders = S.selectedIds.size > 0 ? S.orders.filter(o=>S.selectedIds.has(o.order_id)) : S.orders;
+  const num = document.getElementById('poNumber').value;
+  document.getElementById('poNumDisplay').textContent = num;
+  document.getElementById('poDateDisplay').textContent = fmtDate(new Date(document.getElementById('poDate').value + 'T00:00:00'));
+
+  if (!orders.length) {
+    document.getElementById('poTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px">주문 데이터가 없습니다. 먼저 주문을 조회하세요.</td></tr>';
+    return;
+  }
+
+  let rows=[], shipRows=[], totalQty=0, totalAmt=0, idx=1;
+  orders.forEach(o => {
+    const items = o.items||[];
+    const addr = o.shippingaddress||{};
+    if (items.length) {
+      items.forEach(i => {
+        const qty = Number(i.quantity)||1, price = Number(i.price)||0;
+        rows.push(`<tr><td class="center">${idx++}</td><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>${i.product_name||'–'}</td><td style="font-size:11px;color:#777">${i.option_value||'–'}</td><td class="center"><strong>${qty}</strong></td><td class="right">₩${price.toLocaleString()}</td><td class="right">₩${(price*qty).toLocaleString()}</td><td></td></tr>`);
+        totalQty+=qty; totalAmt+=price*qty;
+      });
+    } else {
+      const amt = Number(o.payment_amount)||0;
+      rows.push(`<tr><td class="center">${idx++}</td><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>–</td><td style="font-size:11px;color:#777">–</td><td class="center"><strong>1</strong></td><td class="right">₩${amt.toLocaleString()}</td><td class="right">₩${amt.toLocaleString()}</td><td></td></tr>`);
+      totalQty+=1; totalAmt+=amt;
+    }
+    shipRows.push(`<tr><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>${addr.name||'–'}</td><td>${addr.phone||'–'}</td><td style="font-size:12px">(${addr.zipcode||''}) ${addr.address1||''} ${addr.address2||''}</td><td></td></tr>`);
+  });
+
+  document.getElementById('poTableBody').innerHTML = rows.join('');
+  document.getElementById('poTotalQty').textContent = totalQty;
+  document.getElementById('poTotalAmount').textContent = `₩${totalAmt.toLocaleString()}`;
+  document.getElementById('poShippingBody').innerHTML = shipRows.join('');
+}
+
+function printOne(id) { S.selectedIds.clear(); S.selectedIds.add(id); navigate('purchase-order'); setTimeout(generatePO,100); }
+function printSelected() { navigate('purchase-order'); setTimeout(generatePO,100); }
+
+/* ══════════════════ SHIPPING TABLE ══════════════════ */
+function renderShippingTable() {
+  const tbody = document.getElementById('shippingTable');
+  const orders = S.orders.filter(o => o.paid==='T' && o.canceled!=='T');
+  const inv = JSON.parse(localStorage.getItem('invoices')||'{}');
+  document.getElementById('noInvoiceCount').textContent = `${orders.length}건`;
+  if (!orders.length) { tbody.innerHTML='<tr class="loading-row"><td colspan="9">📭 주문 없음</td></tr>'; return; }
+  tbody.innerHTML = orders.map(o => {
+    const addr = o.shippingaddress||{};
+    const saved = inv[o.order_id]||'';
+    return `<tr>
+      <td><input type="checkbox" class="ship-check" value="${o.order_id}"></td>
+      <td class="mono" style="font-size:12px">${o.order_id}</td>
+      <td style="font-size:12px">${fmtDate(new Date(o.order_date))}</td>
+      <td>${addr.name||'–'}</td>
+      <td style="font-size:12px">${addr.phone||'–'}</td>
+      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${addr.address1||'–'}</td>
+      <td><input type="text" class="form-input" id="inv_${o.order_id}" style="width:140px;font-size:12px;padding:4px 8px" placeholder="운송장 번호" value="${saved}" onchange="saveInv('${o.order_id}',this.value)"></td>
+      <td>${saved?'<span class="badge green">입력완료</span>':'<span class="badge gray">미입력</span>'}</td>
+      <td><button class="btn sm primary" onclick="submitLogen('${o.order_id}')">전송</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function saveInv(id, val) {
+  const inv = JSON.parse(localStorage.getItem('invoices')||'{}');
+  inv[id] = val;
+  localStorage.setItem('invoices', JSON.stringify(inv));
+  renderShippingTable();
+}
+function toggleAllShipCheck(cb) { document.querySelectorAll('.ship-check').forEach(c=>c.checked=cb.checked); }
+
+/* ══════════════════ LOGEN API ══════════════════ */
+function saveLozenConfig() {
+  localStorage.setItem('lozen_config', JSON.stringify({
+    url: document.getElementById('lozenApiUrl').value,
+    key: document.getElementById('lozenApiKey').value,
+    custId: document.getElementById('lozenCustId').value,
+  }));
+  toast('success', '저장 완료', '로젠택배 설정이 저장되었습니다.');
+}
+async function testLozenApi() {
+  const cfg = JSON.parse(localStorage.getItem('lozen_config')||'{}');
+  const el = document.getElementById('lozenTestResult');
+  el.style.display='block';
+  if (!cfg.url||!cfg.key) { el.style.color='var(--red)'; el.textContent='❌ URL과 인증키를 먼저 입력하세요.'; return; }
+  el.style.color='var(--text2)'; el.textContent='⏳ 테스트 중...';
+  try {
+    const res = await fetch(cfg.url+'/ping', { headers:{'Authorization':cfg.key} });
+    el.style.color=res.ok?'var(--green)':'var(--yellow)';
+    el.textContent=res.ok?'✅ 연결 성공!':'⚠️ HTTP '+res.status;
+  } catch(e) { el.style.color='var(--red)'; el.textContent='❌ 연결 실패: '+e.message; }
+}
+async function submitLogen(orderId) {
+  const inv = JSON.parse(localStorage.getItem('invoices')||'{}');
+  const invoiceNo = inv[orderId];
+  if (!invoiceNo) { toast('warning','송장 미입력',orderId+' 의 송장번호를 먼저 입력하세요.'); return; }
+  const cfg = JSON.parse(localStorage.getItem('lozen_config')||'{}');
+  if (!cfg.url||!cfg.key) { toast('warning','설정 필요','로젠택배 API 설정을 먼저 완료하세요.'); return; }
+  const o = S.orders.find(x=>x.order_id===orderId);
+  const addr = o?.shippingaddress||{};
+  try {
+    const res = await fetch(`${cfg.url}/orders/waybill`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':cfg.key},
+      body:JSON.stringify({ custId:cfg.custId, ordNo:orderId, waybillNo:invoiceNo, receiverNm:addr.name||'', receiverTel:addr.phone||'', receiverAddr:addr.address1||'', receiverAddr2:addr.address2||'', receiverZip:addr.zipcode||'' }),
+    });
+    if (res.ok) toast('success','송장 전송',orderId+' 송장이 전송되었습니다.');
+    else toast('error','전송 실패','HTTP '+res.status);
+  } catch(e) { toast('error','전송 오류',e.message); }
+}
+
+/* ══════════════════ UTIL ══════════════════ */
+function setDefaultDates() {
+  const today = new Date().toISOString().split('T')[0];
+  const week = new Date(Date.now()-7*864e5).toISOString().split('T')[0];
+  document.getElementById('filterStartDate').value = week;
+  document.getElementById('filterEndDate').value = today;
+}
+function fmtDate(d) {
+  if (!d||isNaN(d)) return '–';
+  return d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function toggleAllCheck(cb) {
+  document.querySelectorAll('.order-check').forEach(c=>c.checked=cb.checked);
+  if (cb.checked) S.orders.forEach(o=>S.selectedIds.add(o.order_id));
+  else S.selectedIds.clear();
+}
+function toggleSel(id, checked) { if(checked)S.selectedIds.add(id); else S.selectedIds.delete(id); }
+function exportOrders() {
+  if (!S.orders.length) { toast('warning','없음','먼저 주문을 조회하세요.'); return; }
+  const csv = [['주문번호','회원ID','이메일','결제금액','주문일','결제상태'].join(','),
+    ...S.orders.map(o=>[o.order_id,o.member_id,o.member_email,o.payment_amount,o.order_date,o.paid==='T'?'결제완료':'미결제'].join(','))].join('\n');
+  const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv'})),download:`orders_${new Date().toISOString().split('T')[0]}.csv`});
+  a.click(); toast('success','내보내기','CSV 다운로드됩니다.');
+}
+function clearAllData() {
+  if (!confirm('모든 데이터를 삭제하시겠습니까?')) return;
+  localStorage.clear(); sessionStorage.clear();
+  S.orders=[]; S.token=null; S.knownIds.clear(); S.selectedIds.clear();
+  stopPolling(); updateAuthUI(); updateHeaderStatus(); renderOrders([]); updateDashboard();
+  toast('info','초기화','모든 데이터가 삭제됐습니다.');
+}
+
+/* ══════════════════ TOAST ══════════════════ */
+function toast(type, title, msg) {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<div class="toast-title">${title}</div><div class="toast-msg">${msg}</div>`;
+  c.appendChild(el);
+  setTimeout(()=>{ el.style.animation='slideOut .3s ease forwards'; setTimeout(()=>el.remove(),300); }, 4000);
+}
+</script>
+</body>
+</html>
