@@ -863,22 +863,20 @@ function showDetail(id) {
   if (!o) return;
   document.getElementById('detailOrderId').textContent = `주문 상세 – ${id}`;
   const items = o.items || [];
-  const addr = o.shippingaddress || {};
   const buyer = o.buyer || {};
   document.getElementById('detailPanelBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div>
         <div class="text-muted text-sm" style="font-weight:600;margin-bottom:10px">주문 상품</div>
-        ${items.length ? items.map(i=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${i.product_name||'상품명 없음'}</span><span class="mono" style="color:var(--text2)">×${i.quantity} | ₩${Number(i.price||0).toLocaleString()}</span></div>`).join('') : '<div class="text-muted text-sm">상품 정보 없음</div>'}
+        ${items.length ? items.map(i=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${i.product_name||'상품명 없음'} <span style="color:var(--text3);font-size:11px">${i.option_value||''}</span></span><span class="mono" style="color:var(--text2)">×${i.quantity} | ₩${Number(i.product_price||0).toLocaleString()}</span></div>`).join('') : '<div class="text-muted text-sm">상품 정보 없음</div>'}
       </div>
       <div>
         <div class="text-muted text-sm" style="font-weight:600;margin-bottom:10px">배송 정보</div>
         <div style="background:var(--bg3);border-radius:6px;padding:12px;font-size:13px;line-height:2.1">
           <div><strong>주문자:</strong> ${buyer.name||o.billing_name||'–'}</div>
-          <div><strong>수취인:</strong> ${addr.name||addr.recipient_name||'–'}</div>
-          <div><strong>연락처:</strong> ${addr.phone||addr.phone1||buyer.phone||'–'}</div>
-          <div><strong>우편번호:</strong> ${addr.zipcode||addr.zip_code||'–'}</div>
-          <div><strong>주소:</strong> ${addr.address1||addr.address||'–'} ${addr.address2||''}</div>
+          <div><strong>연락처:</strong> ${buyer.cellphone||buyer.phone||'–'}</div>
+          <div><strong>우편번호:</strong> ${buyer.buyer_zipcode||'–'}</div>
+          <div><strong>주소:</strong> ${buyer.buyer_address1||'–'} ${buyer.buyer_address2||''}</div>
         </div>
         <button class="btn sm primary" style="margin-top:10px" onclick="navigate('shipping')">🚚 송장 입력</button>
       </div>
@@ -926,7 +924,7 @@ function generatePO() {
     const addr = o.shippingaddress||{};
     if (items.length) {
       items.forEach(i => {
-        const qty = Number(i.quantity)||1, price = Number(i.price)||0;
+        const qty = Number(i.quantity)||1, price = Number(i.product_price)||Number(i.price)||0;
         rows.push(`<tr><td class="center">${idx++}</td><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>${i.product_name||'–'}</td><td style="font-size:11px;color:#777">${i.option_value||'–'}</td><td class="center"><strong>${qty}</strong></td><td class="right">₩${price.toLocaleString()}</td><td class="right">₩${(price*qty).toLocaleString()}</td><td></td></tr>`);
         totalQty+=qty; totalAmt+=price*qty;
       });
@@ -935,7 +933,8 @@ function generatePO() {
       rows.push(`<tr><td class="center">${idx++}</td><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>–</td><td style="font-size:11px;color:#777">–</td><td class="center"><strong>1</strong></td><td class="right">₩${amt.toLocaleString()}</td><td class="right">₩${amt.toLocaleString()}</td><td></td></tr>`);
       totalQty+=1; totalAmt+=amt;
     }
-    shipRows.push(`<tr><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>${addr.name||'–'}</td><td>${addr.phone||'–'}</td><td style="font-size:12px">(${addr.zipcode||''}) ${addr.address1||''} ${addr.address2||''}</td><td></td></tr>`);
+    const b = o.buyer || {};
+    shipRows.push(`<tr><td style="font-size:11px;font-family:monospace">${o.order_id}</td><td>${b.name||o.billing_name||'–'}</td><td>${b.cellphone||b.phone||'–'}</td><td style="font-size:12px">(${b.buyer_zipcode||''}) ${b.buyer_address1||''} ${b.buyer_address2||''}</td><td></td></tr>`);
   });
 
   document.getElementById('poTableBody').innerHTML = rows.join('');
@@ -961,9 +960,9 @@ function renderShippingTable() {
       <td><input type="checkbox" class="ship-check" value="${o.order_id}"></td>
       <td class="mono" style="font-size:12px">${o.order_id}</td>
       <td style="font-size:12px">${fmtDate(new Date(o.order_date))}</td>
-      <td>${addr.name||'–'}</td>
-      <td style="font-size:12px">${addr.phone||'–'}</td>
-      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${addr.address1||'–'}</td>
+      <td>${(o.buyer&&o.buyer.name)||o.billing_name||'–'}</td>
+      <td style="font-size:12px">${(o.buyer&&(o.buyer.cellphone||o.buyer.phone))||'–'}</td>
+      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(o.buyer&&o.buyer.buyer_address1)||'–'}</td>
       <td><input type="text" class="form-input" id="inv_${o.order_id}" style="width:140px;font-size:12px;padding:4px 8px" placeholder="운송장 번호" value="${saved}" onchange="saveInv('${o.order_id}',this.value)"></td>
       <td>${saved?'<span class="badge green">입력완료</span>':'<span class="badge gray">미입력</span>'}</td>
       <td><button class="btn sm primary" onclick="submitLogen('${o.order_id}')">전송</button></td>
@@ -1007,12 +1006,12 @@ async function submitLogen(orderId) {
   const cfg = JSON.parse(localStorage.getItem('lozen_config')||'{}');
   if (!cfg.url||!cfg.key) { toast('warning','설정 필요','로젠택배 API 설정을 먼저 완료하세요.'); return; }
   const o = S.orders.find(x=>x.order_id===orderId);
-  const addr = o?.shippingaddress||{};
+  const b = o?.buyer||{};
   try {
     const res = await fetch(`${cfg.url}/orders/waybill`, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':cfg.key},
-      body:JSON.stringify({ custId:cfg.custId, ordNo:orderId, waybillNo:invoiceNo, receiverNm:addr.name||'', receiverTel:addr.phone||'', receiverAddr:addr.address1||'', receiverAddr2:addr.address2||'', receiverZip:addr.zipcode||'' }),
+      body:JSON.stringify({ custId:cfg.custId, ordNo:orderId, waybillNo:invoiceNo, receiverNm:b.name||o?.billing_name||'', receiverTel:b.cellphone||b.phone||'', receiverAddr:b.buyer_address1||'', receiverAddr2:b.buyer_address2||'', receiverZip:b.buyer_zipcode||'' }),
     });
     if (res.ok) toast('success','송장 전송',orderId+' 송장이 전송되었습니다.');
     else toast('error','전송 실패','HTTP '+res.status);
