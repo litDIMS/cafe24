@@ -578,7 +578,8 @@ function startOAuth() {
     + `?response_type=code`
     + `&client_id=${CONFIG.CLIENT_ID}`
     + `&state=${csrf}`
-    + `&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}`;
+    + `&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}`
+    + `&scope=${encodeURIComponent(CONFIG.SCOPES)}`;
   toast('info', '카페24 인증', '인증 페이지로 이동합니다...');
   window.location.href = authUrl;
 }
