@@ -277,7 +277,7 @@ select.form-input { cursor:pointer; }
     <div class="card-header"><span class="card-title">주문 목록</span><span class="text-muted text-sm" id="orderCount">0건</span></div>
     <div class="table-wrap"><table><thead><tr>
       <th><input type="checkbox" id="checkAll" onchange="toggleAllCheck(this)"></th>
-      <th>주문번호</th><th>회원ID</th><th>이메일</th><th>결제금액</th><th>결제수단</th><th>주문일시</th><th>결제</th><th>배송</th><th>액션</th>
+      <th>주문번호</th><th>주문자명</th><th>회원ID</th><th>결제금액</th><th>결제수단</th><th>주문일시</th><th>결제</th><th>배송</th><th>액션</th>
     </tr></thead><tbody id="ordersTable"><tr class="loading-row"><td colspan="10">인증 후 주문을 조회하세요</td></tr></tbody></table></div>
     <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;">
       <button class="btn sm" onclick="printSelected()">🖨️ 선택 발주서 출력</button>
@@ -838,11 +838,12 @@ function renderOrders(orders) {
       : o.shipping_status==='M' ? '<span class="badge blue">운송장발행</span>'
       : o.shipping_status==='T' ? '<span class="badge yellow">배송준비</span>'
       : '<span class="badge gray">–</span>';
+    const buyerName = (o.buyer&&o.buyer.name) || o.billing_name || '–';
     return `<tr>
       <td><input type="checkbox" class="order-check" value="${o.order_id}" onchange="toggleSel('${o.order_id}',this.checked)"></td>
       <td class="mono" style="font-size:12px">${o.order_id}</td>
-      <td>${o.member_id||'–'}</td>
-      <td style="font-size:12px;color:var(--text2)">${o.member_email||'–'}</td>
+      <td><strong>${buyerName}</strong></td>
+      <td style="font-size:12px;color:var(--text2)">${o.member_id||'–'}</td>
       <td class="mono">₩${Number(o.payment_amount||0).toLocaleString()}</td>
       <td style="font-size:12px">${(o.payment_method_name||[]).join(', ')}</td>
       <td style="font-size:12px;color:var(--text2)">${fmtDate(new Date(o.order_date))}</td>
@@ -863,6 +864,7 @@ function showDetail(id) {
   document.getElementById('detailOrderId').textContent = `주문 상세 – ${id}`;
   const items = o.items || [];
   const addr = o.shippingaddress || {};
+  const buyer = o.buyer || {};
   document.getElementById('detailPanelBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div>
@@ -872,10 +874,11 @@ function showDetail(id) {
       <div>
         <div class="text-muted text-sm" style="font-weight:600;margin-bottom:10px">배송 정보</div>
         <div style="background:var(--bg3);border-radius:6px;padding:12px;font-size:13px;line-height:2.1">
-          <div><strong>수취인:</strong> ${addr.name||'–'}</div>
-          <div><strong>연락처:</strong> ${addr.phone||'–'}</div>
-          <div><strong>우편번호:</strong> ${addr.zipcode||'–'}</div>
-          <div><strong>주소:</strong> ${addr.address1||'–'} ${addr.address2||''}</div>
+          <div><strong>주문자:</strong> ${buyer.name||o.billing_name||'–'}</div>
+          <div><strong>수취인:</strong> ${addr.name||addr.recipient_name||'–'}</div>
+          <div><strong>연락처:</strong> ${addr.phone||addr.phone1||buyer.phone||'–'}</div>
+          <div><strong>우편번호:</strong> ${addr.zipcode||addr.zip_code||'–'}</div>
+          <div><strong>주소:</strong> ${addr.address1||addr.address||'–'} ${addr.address2||''}</div>
         </div>
         <button class="btn sm primary" style="margin-top:10px" onclick="navigate('shipping')">🚚 송장 입력</button>
       </div>
